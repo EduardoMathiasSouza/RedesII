@@ -14,10 +14,12 @@ Criado em: 02/2023
 #include <unistd.h>
 #include <string.h> 
 #include <sys/time.h> 
+#include <math.h>
+#include "utils.h"
 
 #define REMOTE_SERVER_PORT 1500
 #define MAX_MSG 1024
-
+#define NUM_DATA_SENT 100
 
 int main(int argc, char *argv[]) {
   
@@ -26,8 +28,8 @@ int main(int argc, char *argv[]) {
   struct hostent *h;
 
   /* Confimando os argumentos da linha de comando*/
-  if(argc<3) {
-    puts("Uso: ./cliente <server> <data1> ... <dataN> \n");
+  if(argc<2) {
+    puts("Uso: ./cliente <server>\n");
     exit(1);
   }
 
@@ -68,14 +70,16 @@ int main(int argc, char *argv[]) {
 
 
   /* send data */
-  for(i=2;i<argc;i++) {
-    if(sendto(sockfd, argv[i], strlen(argv[i])+1, 0, 
+  for(i=1;i<=NUM_DATA_SENT;i++) {
+    char* msg = toArray(i);
+    if(sendto(sockfd, msg, sizeof(i), 0, 
 		(struct sockaddr *) &remoteServAddr, 
 		sizeof(remoteServAddr))<0) {
       printf("%s: cannot send data %d \n",argv[0],i-1);
       close(sockfd);
       exit(1);
     }
+    free(msg);
   }
   
   return 1;
