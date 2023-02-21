@@ -1,13 +1,10 @@
 all: server cliente
 
-server: serverUDP.c utils.o
-	gcc -o server serverUDP.c utils.o -lm
+server: serverUDP.c
+	gcc -g  -o server serverUDP.c -lm -pthread
 
-cliente: clientUDP.c utils.o
-	gcc -o cliente clientUDP.c utils.o -lm
-
-utils.o: utils.c utils.h
-	gcc -c utils.c -lm
+cliente: clientUDP.c
+	gcc -g -o cliente clientUDP.c -lm -pthread
 
 clean:
 	rm -f *.o server cliente 

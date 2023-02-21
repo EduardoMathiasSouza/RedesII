@@ -1,5 +1,5 @@
 /*Cliente UDP 
-Alunos: Eduardo Mathias de Souza e ViniMax
+Alunos: Eduardo Mathias de Souza e  Vinicius Matheus
 Criado em: 02/2023
 */
 
@@ -15,11 +15,10 @@ Criado em: 02/2023
 #include <string.h> 
 #include <sys/time.h> 
 #include <math.h>
-#include "utils.h"
 
 #define REMOTE_SERVER_PORT 1500
 #define MAX_MSG 1024
-#define NUM_DATA_SENT 100
+#define NUM_DATA_SENT 1000
 
 int main(int argc, char *argv[]) {
   
@@ -70,16 +69,16 @@ int main(int argc, char *argv[]) {
 
 
   /* send data */
-  for(i=1;i<=NUM_DATA_SENT;i++) {
-    char* msg = toArray(i);
+  for(long int i=1;i<=NUM_DATA_SENT;i++) {
+    char msg[NUM_DATA_SENT];
+    sprintf(msg, "%ld", i);
     if(sendto(sockfd, msg, sizeof(i), 0, 
 		(struct sockaddr *) &remoteServAddr, 
 		sizeof(remoteServAddr))<0) {
-      printf("%s: cannot send data %d \n",argv[0],i-1);
+      printf("%s: cannot send data %ld \n",argv[0],i-1);
       close(sockfd);
       exit(1);
     }
-    free(msg);
   }
   
   return 1;

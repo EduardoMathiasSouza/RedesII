@@ -1,5 +1,5 @@
 /*Server UDP 
-Alunos: Eduardo Mathias de Souza e ViniMax
+Alunos: Eduardo Mathias de Souza e Vinicius Matheus
 Criado em: 02/2023
 */
 
@@ -13,11 +13,32 @@ Criado em: 02/2023
 #include <stdio.h>
 #include <unistd.h> 
 #include <string.h> 
-#include "utils.h"
+#include <unistd.h>
+#include <sys/time.h>
+#include <errno.h>
 
 #define LOCAL_SERVER_PORT 1500
 #define MAX_MSG 1024
-#define NUM_DATA_SENT 100
+#define NUM_DATA_SENT 1000
+
+
+// Função para printar os dados recebidos e resetar as variáveis
+void resetData(long int **lostData, int *lostDataTam, long int *count, int *order){
+    // Calcula a taxa de perda
+    int loss = *count - *lostDataTam;
+    loss = (loss * 100) / NUM_DATA_SENT;
+
+    printf("Taxa de perda: %d%%\n", loss);
+    if(*order == 1){
+      printf("Mensagens foram recebidas em ordem\n");
+    }else{
+      printf("Mensagens foram recebidas fora de ordem\n");
+    }
+
+    *count = 1;
+    *order = 1;
+    *lostDataTam = 0;
+}
 
 int main(int argc, char *argv[]) {
   
@@ -34,6 +55,11 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  //Define timeout de 2 segundos
+  struct timeval timeout = {2,0};
+  setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+
+
   /* bind local server port */
   servAddr.sin_family = AF_INET;
   servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -49,11 +75,15 @@ int main(int argc, char *argv[]) {
 	   argv[0],LOCAL_SERVER_PORT);
 
   //lista de dados recebidos
-  char receivedData[NUM_DATA_SENT][1];
-  for(int i = 0; i < 100; i++){
-      receivedData[i][0] = 0;
+  long int *lostData;
+  lostData = (long int *) malloc((NUM_DATA_SENT) * sizeof(long int));
+  if(lostData == NULL){
+    printf("Erro ao alocar memoria");
+    exit(1);
   }
-  int count = 1;
+
+  int lostDataTam = 0;
+  long int count = 1;
   int order = 1;
 
   /* server infinite loop */
@@ -67,49 +97,56 @@ int main(int argc, char *argv[]) {
     n = recvfrom(sockfd, msg, MAX_MSG, 0, 
 		 (struct sockaddr *) &cliAddr, &cliLen);
 
+    // Verifica se houve erros na recepção
     if(n<0) {
-      printf("%s: cannot receive data \n",argv[0]);
-      continue;
-    }
+      // Verifica se o erro foi de timeout
+      if(errno == EWOULDBLOCK || errno == EAGAIN){
+        // Se foi timeout e já estava recebendo mensagens, reinicia a contagem
+        if(count > 1)
+          resetData(&lostData, &lostDataTam, &count, &order);
+        continue;
+      } else {
+        printf("%s: cannot receive data \n",argv[0]);
+        continue;
+      }
+    // Se não houve erross
+    } else {
+      //adiciona a mensagem na lista dos recebidos
+      long int i;
+      sscanf(msg, "%ld", &i);
 
-    //adiciona a mensagem na lista dos recebidos
-    int i;
-    sscanf(msg, "%d", &i);
-    receivedData[i][0] = 1;
-
-    if(i != count){
-      order = 0;
-    }
-
-    count++;
-
-    /* print received message */
-    printf("%s: from %s:UDP%u : %s \n", 
-	   argv[0],inet_ntoa(cliAddr.sin_addr),
-	   ntohs(cliAddr.sin_port),msg);
-
-     if(count == NUM_DATA_SENT+1){
-        //printar taxa de perda e se a ordem foi mantida
-        int loss = 0;
-        for(int i = 1; i < NUM_DATA_SENT+1; i++){
-          if(receivedData[i][0] == 0){
-            loss++;
+      // Verifica se a mensagem já está no vetor de mensagens perdidas
+      if(lostDataTam > 0){
+        for(int j = 0; j < lostDataTam; j++){
+          // Se a mensagem já está no vetor, remove ela do vetor
+          if(i == lostData[j]){
+            lostData[j] = 0;
+            order = 0;
+            break;
           }
         }
-        printf("Taxa de perda: %d%%\n", loss);
-        if(order == 1){
-          printf("Mensagens foram recebidas em ordem\n");
-        }else{
-          printf("Mensagens foram recebidas fora de ordem\n");
-        }
+      }
 
-        //zerar lista de dados recebidos
-        for(int i = 0; i < 100; i++){
-          receivedData[i][0] = 0;
-        }
-        count = 1;
-        order = 1;
-     }
+      // Verifica se a mensagem recebida é a próxima da sequência
+      if(i != count){
+        // Se não for, adiciona a mensagem no vetor de mensagens perdidas
+        if(i < count)
+          order = 0;
+        lostData[lostDataTam] = count;
+        lostDataTam++;
+      }
+      count++;
+
+      /* print received message */
+      printf("%s: from %s:UDP%u : %s \n", 
+      argv[0],inet_ntoa(cliAddr.sin_addr),
+      ntohs(cliAddr.sin_port),msg);
+
+      // Verifica se já recebeu todas as mensagens
+      if(count == NUM_DATA_SENT+1){
+          resetData(&lostData, &lostDataTam, &count, &order);
+      }
+    }
     
   }/* end of server infinite loop */
 
