@@ -17,7 +17,7 @@ Criado em: 02/2023
 
 #define REMOTE_SERVER_PORT 1500
 #define MAX_MSG 1024
-#define NUM_DATA_SENT 1000
+#define NUM_DATA_SENT 10000
 
 int main(int argc, char *argv[]) {
   

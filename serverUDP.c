@@ -19,13 +19,14 @@ Criado em: 02/2023
 
 #define LOCAL_SERVER_PORT 1500
 #define MAX_MSG 1024
-#define NUM_DATA_SENT 1000
+#define NUM_DATA_SENT 10000
 
 
 // Função para printar os dados recebidos e resetar as variáveis
 void resetData(long int **lostData, int *lostDataTam, long int *count, int *order){
     // Calcula a taxa de perda
-    int loss = *count - *lostDataTam;
+    printf("count: %ld\n", *count);
+    int loss = NUM_DATA_SENT - (*count -1);
     loss = (loss * 100) / NUM_DATA_SENT;
 
     printf("Taxa de perda: %d%%\n", loss);
