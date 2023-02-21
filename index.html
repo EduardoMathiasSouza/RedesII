@@ -5,14 +5,127 @@
 <body>
 <div>
     <h1>Página para entrega do trabalho Canhão UDP</h1>
-    <h2>Autores: Eduardo Mathias de Souza e Vinicius Matheus</h2>
-    <p>Conteúdos da página</p>
-    <nav>
-    <a href="./codigos.html">Códigos em C</a>
-    <a href="./log.txt">Log</a>
-    </nav>
-</div>
+    <h2>Autores:<br>
+        Eduardo Mathias de Souza <em>[GRR20190428]</em><br> 
+        Vinicius Matheus Comarella Ferreira <em>[GRR20196048]</em>
+    </h2>
+    <div>
+        <h1>Códigos em C</h1>
+        <nav>
+            <a href="./clientUDP.c.txt">Código do cliente UDP canhão</a>
+            <a href="./serverUDP.c.txt">Código do servidor UDP canhão</a>
+        </nav>
+    </div>
+    <div>
+        <h1>Log Execução</h1>
+        <nav>
+            <a href="./log.txt">Log</a>
+        </nav>
+    </div>
 <div>
     <h1>Relatório do projeto Canhão UDP</h1>
+    <ol style='margin-top:0in' start=1 type=1>
+        <li>Introdução</li>
+       </ol>
+       
+       <p style='margin-left:.5in;margin-right: .5in;'>O trabalho Canhão UDP tem como objetivo examinar se há perda ou entrega fora de ordem de
+       pacotes UDP/IP na nossa rede, e qual é a taxa aproximada desta perda. Para implementar esse trabalho, utilizamos a linguagem C e criou-se dois códigos: um
+       clientUDP.c para gerar um executável para o cliente e um serverUDP.c para gerar um executável para o servidor.</p>
+
+       <ol style='margin-top:0in' start=2 type=1>
+        <li class=MsoNormal>Modelagem</li>
+       </ol>
+       
+       <p style='text-indent:.5in'>A modelagem da implementação foi feita da seguinte forma:</p>
+       
+       <p style='margin-left:.5in;'>Ambos cliente e servidor possuem um define com o número de pacotes que devem ser enviados e
+       recebidos, o cliente é responsável apenas pelo envio desses pacotes em ordem crescente, contendo o número do pacote como mensagem. </p>
+       
+       <p style='margin-left:.5in;'>O servidor recebe os pacotes verificando a ordem e o recebimento de todos. 
+       Ao final, quando todos os pacotes foram recebidos pelo servidor, ou se aconteceu um timeout de espera de recebimento, o servidor faz o cálculo da taxa de perda
+       e printa na stdout esta porcentagem, além da informação indicando se a ordem dos pacotes foi ou não mantida.</p>
+
+       <ol style='margin-top:0in' start=3 type=1>
+        <li class=MsoNormal>Desenvolvimento</li>
+       </ol>
+       
+       <p style='margin-left:.5in;'>Definimos como
+       padrão a porta 1500 para comunicação entre o cliente e servidor, e o tamanho
+       máximo de uma mensagem igual a 1024. Ambos serverUDP e clienteUDP possuem
+       NUM_DATA_SENT definido como o número de pacotes que serão transmitidos</p>
+       
+       <p style='margin-left:.5in'><u>ServerUDP.c</u></p>
+       
+       <p style='margin-left:.5in'>No
+       código, cria-se um socket e se especifica a porta conhecida 1500 para o
+       serviço. Temos um inteiro count para controlar a sequência dos pacotes
+       recebidos, e uma array de inteiros para armazenar os pacotes que foram
+       perdidos. </p>
+       
+       <p style='margin-left:.5in'>Num loop
+       infinito, o servidor escuta a mensagem vinda do cliente com recvfrom(), a cada
+       mensagem <b>x</b> recebida é verificado se <b>x==count, </b>sendo <b>count </b>a
+       mensagem que o servidor estava esperando, ou seja se <b>x</b> é a próxima na
+       sequência. </p>
+       
+       <p style='margin-left:.5in'>Caso
+       não seja, consideramos que a mensagem <b>count </b>foi perdida e adicionamos na
+       lista de pacotes perdidos e então verificamos se <b>x</b> é maior que <b>count</b>,
+       se sim a ordem continua correta, se não a ordem foi quebrada. </p>
+       
+       <p style='margin-left:.5in'>No
+       outro caso, se <b>x </b>for a mensagem esperada fazemos a verificação se <b>x</b>
+       já está na lista de pacotes perdidos, se estiver ela é removida da lista e <b>i
+       </b>é incrementado, se não estiver o <b>i </b>também é incrementado e o loop
+       continua aguardando a próxima mensagem. Quando count atinge o valor de
+       NUM_DATA_SENT ou acontece um timeout no recvfrom, a função resetData calcula a
+       porcentagem de perda de pacotes, subtraindo o número de pacotes recebidos do
+       número de pacotes esperados e dividindo pelo número de pacotes esperados, então
+       é impresso na tela esta taxa e se as mensagens foram recebidas em ordem.</p>
+
+       <p style='margin-left:.5in'><u>ClientUDP.c</u> </p>
+       
+       <p style='margin-left:.5in'>Para usar o executável do código
+       ClientUDP.c, especificamos que o segundo argumento da linha de comando deve
+       indicar o IP do servidor. </p>
+       
+       <p style='margin-left:.5in'>Cria-se um socket e se especifica a
+       porta conhecida 1500 para o serviço e o servidor para onde serão enviados os
+       dados. Em um laço, enviamos chars começando em 1 até N para o servidor com a
+       função sendto()</p>
+       
+       <ol style='margin-top:0in' start=4 type=1>
+        <li class=MsoNormal>Testes</li>
+       </ol>
+       
+       <p style='margin-left:.5in'>Uma sequência de testes foi feita
+       na rede local e no dinf com diferentes quantidades de pacotes enviados.</p>
+       
+       <p style='margin-left:.5in'><b>Rede Local</b></p>
+       
+       <p style='margin-left:.5in'>Para 100 pacotes nenhuma execução
+       gerou perda e todos os pacotes chegaram em ordem.</p>
+       
+       <p style='margin-left:.5in'>Para 1000 pacotes em 50 execuções a
+       média de perda foi 30% mas a ordem continuou correta.</p>
+    
+       <p style='margin-left:.5in'>Para 10000 pacotes em 50 execuções
+       a média de perda foi 50% mas a ordem permaneceu correta.</p>
+
+       <p style='margin-left:.5in'><b>Dinf</b></p>
+       
+       <p style='text-indent:.5in'>Para 100 pacotes nenhuma execução
+       gerou perda e todos os pacotes chegaram em ordem.</p>
+       
+       <p style='margin-left:.5in'>Para 1000 pacotes em 50 execuções a
+       média de perda foi 5% mas a ordem continuou correta.</p>
+       
+       <p style='margin-left:.5in'>Para 10000 pacotes em 50 execuções
+       a média de perda foi 30% mas a ordem permaneceu correta.</p>
+
+       <p style='margin-left:.5in'>Então é possível observar que para
+       números grandes de pacotes as taxas de perda udp são bem significativas mesmo
+       em redes pequenas.</p>
 </div>
 </body>
+</html>
