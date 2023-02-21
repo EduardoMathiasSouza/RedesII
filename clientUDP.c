@@ -14,7 +14,6 @@ Criado em: 02/2023
 #include <unistd.h>
 #include <string.h> 
 #include <sys/time.h> 
-#include <math.h>
 
 #define REMOTE_SERVER_PORT 1500
 #define MAX_MSG 1024
